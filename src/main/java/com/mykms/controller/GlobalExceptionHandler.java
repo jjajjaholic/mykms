@@ -1,6 +1,8 @@
 package com.mykms.controller;
 
 import com.mykms.dto.ErrorResponse;
+import com.mykms.service.ShutdownService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,10 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ShutdownService shutdownService;
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
@@ -65,8 +70,38 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("Unexpected error", e);
+
+        // 치명적인 오류의 경우 긴급 종료 정보 저장
+        if (isCriticalException(e)) {
+            log.error("치명적인 오류 감지 - 긴급 종료 정보 저장");
+            shutdownService.saveEmergencyInfo("Critical Exception: " + e.getClass().getSimpleName(), e);
+        }
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("내부 서버 오류가 발생했습니다: " + e.getMessage()));
+    }
+
+    /**
+     * 치명적인 예외인지 판단
+     */
+    private boolean isCriticalException(Exception e) {
+        // OutOfMemoryError, StackOverflowError 등 치명적인 오류
+        if (e instanceof OutOfMemoryError || e instanceof StackOverflowError) {
+            return true;
+        }
+
+        // NullPointerException, ClassCastException 등 예상치 못한 런타임 오류
+        if (e instanceof NullPointerException || e instanceof ClassCastException) {
+            return true;
+        }
+
+        // 데이터베이스 관련 심각한 오류
+        String message = e.getMessage();
+        if (message != null && (message.contains("database") || message.contains("connection"))) {
+            return true;
+        }
+
+        return false;
     }
 }
