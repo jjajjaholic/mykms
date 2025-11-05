@@ -1,4 +1,4 @@
-# Python
+# Python (Legacy)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,9 +7,7 @@ __pycache__/
 env/
 venv/
 ENV/
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -26,6 +24,24 @@ wheels/
 # Virtual environments
 .venv
 venv/
+
+# Java/Maven
+target/
+build/
+!**/src/main/**
+!**/src/test/**
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle (if needed)
+.gradle/
+gradle/
 
 # Environment variables
 .env
