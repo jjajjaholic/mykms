@@ -59,6 +59,9 @@ gradle/
 *.sqlite
 *.sqlite3
 
+# Backups
+backups/
+
 # Keys storage
 keys/
 *.key
