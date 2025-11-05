@@ -1,5 +1,7 @@
 package com.mykms.config;
 
+import com.mykms.filter.IpWhitelistFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,14 +16,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security 설정
- * Basic Authentication 사용
+ * Basic Authentication + IP 화이트리스트 사용
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final IpWhitelistFilter ipWhitelistFilter;
 
     @Value("${mykms.admin.username:admin}")
     private String adminUsername;
@@ -37,7 +43,9 @@ public class SecurityConfig {
                         .requestMatchers("/", "/health", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(Customizer.withDefaults())
+                // IP 화이트리스트 필터를 UsernamePasswordAuthenticationFilter 이전에 추가
+                .addFilterBefore(ipWhitelistFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
